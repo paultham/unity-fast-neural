@@ -1,0 +1,5 @@
+data/train
+data/output
+summaries
+.vscode
+*.pyc
