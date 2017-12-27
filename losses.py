@@ -1,7 +1,5 @@
 #%%
 import tensorflow as tf
-from models import VGG16, SpriteGenerator
-from params import TrainingParams
 import numpy as np
 
 def content_loss(vggTrain, vggRef, weight):
@@ -27,6 +25,7 @@ def style_layer_loss(a_S, a_G):
 def style_loss(sess, vggTrain, vggRef, style_input, style_weight):
     with tf.variable_scope('style_loss'):
         loss = 0
+
         ref_styles = sess.run(vggRef.style_layers, feed_dict={vggRef.input:style_input})
 
         for i in range(len(ref_styles)):
@@ -38,7 +37,6 @@ def style_loss(sess, vggTrain, vggRef, style_input, style_weight):
 
 def tv_loss(X, weight):
     with tf.variable_scope('tv_loss'):
-        #return tf.reduce_sum(tf.image.total_variation(inputs))
         ident = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         v_array = np.array([[ident], [-1*ident]])
         h_array = np.array([[ident, -1*ident]])
@@ -50,29 +48,12 @@ def tv_loss(X, weight):
 
         return weight * tf.reduce_sum(tf.square(hdiff)) + tf.reduce_sum(tf.square(vdiff))
 
-def total_loss(c, s, v):
+def total_loss(sess, generator, vggTrain, vggRef, input_style, params):
+    J_content = content_loss(vggTrain, vggRef, params.content_weight)
+    J_style = style_loss(sess, vggTrain, vggRef, input_style, params.style_weight)
+    J_tv = tv_loss(generator.output, params.tv_weight)
     with tf.variable_scope('total_loss'):
-        return c + s + v
-
-tf.reset_default_graph()
-sess = tf.InteractiveSession()
-
-input_shape = [2,256,256,3]
-input_placeholder = tf.placeholder(dtype=tf.float32, shape=input_shape, name='input_images')
-input_style = np.zeros([2,256,256,3])
-
-params = TrainingParams()
-gen = SpriteGenerator(input_placeholder, 'SpriteGenerator')
-vggTrain = VGG16(gen.output, 'train_vgg')
-vggRef = VGG16(input_placeholder, 'train_ref')
-J_content = content_loss(vggTrain, vggRef, params.content_weight)
-J_style = style_loss(sess, vggTrain, vggRef, input_style, params.style_weight)
-J_tv = tv_loss(gen.output, params.tv_weight)
-J = total_loss(J_content, J_style, J_tv)
-
-merged_summary = tf.summary.merge_all()
-summary_writer = tf.summary.FileWriter('summaries', sess.graph)
-
-sess.run(tf.global_variables_initializer())
-
-print('Done')
+        total_loss = J_content + J_style + J_tv
+    with tf.variable_scope('optimizer'):
+        train_step = tf.train.AdamOptimizer(params.learn_rate).minimize(total_loss)
+    return total_loss, train_step    

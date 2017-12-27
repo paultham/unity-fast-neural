@@ -143,19 +143,3 @@ class SpriteGenerator:
                 X = instNorm(conv(X, 9, 3))
             with tf.variable_scope('output'):
                 self.output = (tf.tanh(X)*255. + 255.)/2.
-
-# tf.reset_default_graph()
-# sess = tf.InteractiveSession()
-
-# input_placeholder = tf.placeholder(dtype=tf.float32, shape=[2,256,256,3], name='input_images')
-
-# gen = SpriteGenerator(input_placeholder, 'SpriteGenerator')
-# vgg = VGG16(gen.output, 'train_vgg')
-# vgg = VGG16(input_placeholder, 'train_ref')
-
-# merged_summary = tf.summary.merge_all()
-# summary_writer = tf.summary.FileWriter('summaries', sess.graph)
-
-# sess.run(tf.global_variables_initializer())
-
-# print('Done')

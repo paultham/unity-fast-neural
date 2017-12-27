@@ -3,3 +3,5 @@ data/output
 summaries
 .vscode
 *.pyc
+doodle.py
+.ipynb_checkpoints
