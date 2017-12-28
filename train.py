@@ -5,7 +5,7 @@ from pipeline import *
 from params import TrainingParams
 from models import *
 
-def train(params, report_fn=None):
+def train(params, report_fn=None, restore_epoch=None):
     tf.reset_default_graph()
     sess = tf.InteractiveSession()
 
@@ -26,12 +26,17 @@ def train(params, report_fn=None):
     files_iterator = create_pipeline(sess, params)
     next_files = files_iterator.get_next()
 
-    print('Starting...')
-    sess.run(tf.global_variables_initializer())
-
     saver = tf.train.Saver()
+    initial_epoch = 0
+    if restore_epoch is not None:
+        initial_epoch = restore_epoch+1
+        saver.restore(sess, params.save_path + str(restore_epoch))
+        print('Continuing...')
+    else:
+        print('Starting...')
+        sess.run(tf.global_variables_initializer())
 
-    for epoch in range(params.num_epoch):
+    for epoch in range(initial_epoch, initial_epoch+params.num_epoch):
         sess.run(files_iterator.initializer)
         batch = 0
         while True:
@@ -44,8 +49,12 @@ def train(params, report_fn=None):
                 else:
                     report_fn(batch, epoch, total_cost)
                 batch += 1
+
             except tf.errors.OutOfRangeError:
-                break
+                break   
+
+        print('Saving checkpoint')
+        saver.save(sess, params.save_path + str(epoch))
     
     print('Saving model to ' + params.save_path)
     saver.save(sess, params.save_path)
