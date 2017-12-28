@@ -29,6 +29,8 @@ def train(params, report_fn=None):
     print('Starting...')
     sess.run(tf.global_variables_initializer())
 
+    saver = tf.train.Saver()
+
     for epoch in range(params.num_epoch):
         sess.run(files_iterator.initializer)
         batch = 0
@@ -45,6 +47,9 @@ def train(params, report_fn=None):
             except tf.errors.OutOfRangeError:
                 break
     
+    print('Saving model to ' + params.save_path)
+    saver.save(sess, params.save_path)
+
     print('Done...')
 
 # params = TrainingParams()

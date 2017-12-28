@@ -2,10 +2,10 @@
 import tensorflow as tf
 from params import TrainingParams
 
-def process_img(filename, size):
+def process_img(filename, size=None):
     image_string = tf.read_file(filename)
     image_decoded = tf.image.decode_jpeg(image_string, channels=3)
-    image_resized = tf.image.resize_images(image_decoded, size)
+    image_resized = tf.image.resize_images(image_decoded, size) if size is not None else image_decoded
     return image_resized
 
 def create_pipeline(sess, params):

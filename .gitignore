@@ -1,5 +1,6 @@
 data/train
 data/output
+data/model
 summaries
 .vscode
 *.pyc
