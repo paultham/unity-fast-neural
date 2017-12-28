@@ -47,7 +47,7 @@ def train(params, report_fn=None, restore_epoch=None):
                 if report_fn is None:
                     print('Batch %i, Epoch %i, Cost %s' % (batch, epoch, str(total_cost)))
                 else:
-                    report_fn(batch, epoch, total_cost)
+                    report_fn(params, batch, epoch, total_cost)
                 batch += 1
 
             except tf.errors.OutOfRangeError:
