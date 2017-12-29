@@ -73,7 +73,7 @@ def resBlock(X):
     X = instNorm(conv(X, 3, 128, suffix='2'))
     return i + X
 
-def deconv(X, kernel, channel, stride):
+def deconv(X, kernel, channel, stride=2):
     m, prev_w, prev_h, prev_c = X.get_shape()
     output_shape = tf.constant([m, prev_w*stride, prev_h*stride, channel], dtype=tf.int32)
     W = tf.get_variable('deconv_weights', shape=(kernel,kernel,channel,prev_c), initializer=tf.random_normal_initializer())
@@ -85,7 +85,6 @@ class VGG16:
         with VGG16Weights() as w:
             with tf.name_scope(name):
                 X = X - tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
-                self.input = X
                 with tf.name_scope('b1'):
                     X = relu(conv(X, 3, 64, weights=w.get_weights(0), bias=True))
                     X = relu(conv(X, 3, 64, weights=w.get_weights(1), bias=True))
@@ -117,14 +116,14 @@ class VGG16:
 
 class SpriteGenerator:
     def __init__(self, X, name):
-        self.input = X
         with tf.variable_scope(name):
+            X = X/255.
             with tf.variable_scope('b1'):
                 X = relu(instNorm(conv(X, 9, 32)))
             with tf.variable_scope('b2'):
-                X = relu(instNorm(conv(X, 9, 64, stride=2)))
+                X = relu(instNorm(conv(X, 3, 64, stride=2)))
             with tf.variable_scope('b3'):
-                X = relu(instNorm(conv(X, 9, 128, stride=2)))
+                X = relu(instNorm(conv(X, 3, 128, stride=2)))
             with tf.variable_scope('r4'):
                 X = resBlock(X)
             with tf.variable_scope('r5'):
@@ -136,10 +135,10 @@ class SpriteGenerator:
             with tf.variable_scope('r8'):
                 X = resBlock(X)
             with tf.variable_scope('d9'):
-                X = relu(instNorm(deconv(X, 3, 64, 2)))
+                X = relu(instNorm(deconv(X, 3, 64, stride=2)))
             with tf.variable_scope('d10'):
-                X = relu(instNorm(deconv(X, 3, 32, 2)))
+                X = relu(instNorm(deconv(X, 3, 32, stride=2)))
             with tf.variable_scope('d11'):
                 X = instNorm(conv(X, 9, 3))
             with tf.variable_scope('output'):
-                self.output = (tf.tanh(X)*255. + 255.)/2.
+                self.output = (tf.tanh(X) + 1.)*255./2

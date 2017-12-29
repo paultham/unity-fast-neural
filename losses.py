@@ -22,11 +22,11 @@ def style_layer_loss(a_S, a_G):
     _, c1, c2 = GS.get_shape().as_list()
     return tf.reduce_sum(tf.squared_difference(GG,GS)) / float(c1*c2)
 
-def style_loss(sess, vggTrain, vggRef, style_input, style_weight):
+def style_loss(sess, input_var, vggTrain, vggRef, style_input, style_weight):
     with tf.variable_scope('style_loss'):
         loss = 0
 
-        ref_styles = sess.run(vggRef.style_layers, feed_dict={vggRef.input:style_input})
+        ref_styles = sess.run(vggRef.style_layers, feed_dict={input_var:style_input})
 
         for i in range(len(ref_styles)):
             with tf.variable_scope('style_loss_layer_'+str(i)):
@@ -48,9 +48,9 @@ def tv_loss(X, weight):
 
         return weight * tf.reduce_sum(tf.square(hdiff)) + tf.reduce_sum(tf.square(vdiff))
 
-def total_loss(sess, generator, vggTrain, vggRef, input_style, params):
+def total_loss(sess, input_var, generator, vggTrain, vggRef, input_style, params):
     J_content = content_loss(vggTrain, vggRef, params.content_weight)
-    J_style = style_loss(sess, vggTrain, vggRef, input_style, params.style_weight)
+    J_style = style_loss(sess, input_var, vggTrain, vggRef, input_style, params.style_weight)
     J_tv = tv_loss(generator.output, params.tv_weight)
     with tf.variable_scope('total_loss'):
         total_loss = J_content + J_style + J_tv
