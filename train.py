@@ -20,7 +20,7 @@ def train(params, report_fn=None, restore_epoch=None):
     print('Defining Losses...')
     input_style = process_img(params.style_path, params.input_shape[0:2]).eval()
     input_style = np.stack([input_style for n in range(params.batch_size)])
-    J, train_step = total_loss(sess, input_placeholder, gen, vggTrain, vggRef, input_style, params)
+    J, train_step, J_content, J_style = total_loss(sess, input_placeholder, gen, vggTrain, vggRef, input_style, params)
 
     print('Defining Input Pipeline...')
     files_iterator = create_pipeline(sess, params)
@@ -42,12 +42,12 @@ def train(params, report_fn=None, restore_epoch=None):
         while True:
             try:
                 images = sess.run(next_files)
-                _, total_cost = sess.run([train_step, J], feed_dict={input_placeholder:images})
+                _, total_cost, content_cost, style_cost = sess.run([train_step, J, J_content, J_style], feed_dict={input_placeholder:images})
 
                 if report_fn is None:
                     print('Batch %i, Epoch %i, Cost %s' % (batch, epoch, str(total_cost)))
                 else:
-                    report_fn(params, batch, epoch, total_cost)
+                    report_fn(params, batch, epoch, total_cost, content_cost, style_cost)
                 batch += 1
 
             except tf.errors.OutOfRangeError:

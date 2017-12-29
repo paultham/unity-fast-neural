@@ -46,4 +46,4 @@ def total_loss(sess, input_var, generator, vggTrain, vggRef, input_style, params
         total_loss = J_content + J_style + J_tv
     with tf.variable_scope('optimizer'):
         train_step = tf.train.AdamOptimizer(params.learn_rate).minimize(total_loss)
-    return total_loss, train_step    
+    return total_loss, train_step, J_content, J_style
