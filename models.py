@@ -53,7 +53,8 @@ def conv(X, kernel=3, channel=3, stride=1, weights=None, bias=False, suffix=''):
         W = tf.constant(weights[0], name='W')
         B = tf.constant(weights[1], name='B')
 
-    layer = tf.nn.conv2d(X, filter=W, strides=[1, stride, stride, 1], padding='SAME')
+    X = tf.pad(X, [[0,0], [(kernel-1) / 2, (kernel-1) / 2], [(kernel-1) / 2, (kernel-1) / 2], [0,0]], mode='REFLECT')
+    layer = tf.nn.conv2d(X, filter=W, strides=[1, stride, stride, 1], padding='VALID')
     if bias and B is not None:
         layer = layer + B
     return layer
