@@ -15,7 +15,7 @@ def train(params, report_fn=None, restore_epoch=None):
 
     gen = SpriteGenerator(input_placeholder, 'SpriteGenerator')
     vggTrain = VGG16(gen.output, 'train_vgg')
-    vggRef = VGG16(input_placeholder, 'train_ref')
+    vggRef = VGG16(input_placeholder, 'ref_vgg')
 
     print('Defining Losses...')
     input_style = process_img(params.style_path, params.input_shape[0:2]).eval()

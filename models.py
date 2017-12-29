@@ -48,7 +48,7 @@ class VGG16Weights:
 def conv(X, kernel=3, channel=3, stride=1, weights=None, bias=False, suffix=''):
     m, w, h, c = X.get_shape()
     if weights is None:
-        W = tf.get_variable('conv_weight'+suffix, shape=[kernel, kernel, c, channel], initializer=tf.random_normal_initializer(stddev=0.1))
+        W = tf.get_variable('conv_weight'+suffix, shape=[kernel, kernel, c, channel], initializer=tf.truncated_normal_initializer(stddev=0.1))
     else:
         W = tf.constant(weights[0], name='W')
         B = tf.constant(weights[1], name='B')
@@ -76,7 +76,7 @@ def resBlock(X):
 def deconv(X, kernel, channel, stride=2):
     m, prev_w, prev_h, prev_c = X.get_shape()
     output_shape = tf.constant([m, prev_w*stride, prev_h*stride, channel], dtype=tf.int32)
-    W = tf.get_variable('deconv_weights', shape=(kernel,kernel,channel,prev_c), initializer=tf.random_normal_initializer())
+    W = tf.get_variable('deconv_weights', shape=(kernel,kernel,channel,prev_c), initializer=tf.truncated_normal_initializer(stddev=0.1))
     return tf.nn.conv2d_transpose(X, filter=W, strides=[1, stride, stride, 1], output_shape=output_shape, padding='SAME')
 
 class VGG16:
