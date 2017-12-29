@@ -6,8 +6,8 @@ def content_loss(vggTrain, vggRef, weight):
     with tf.variable_scope('content_loss'):
         ref = vggRef.content_layer
         gen = vggTrain.content_layer
-        _, h, w, c = ref.get_shape().as_list()
-        return weight * tf.reduce_sum(tf.squared_difference(ref, gen)) / tf.to_float(h * w * c)
+        size = tf.size(ref)
+        return weight * tf.reduce_sum(tf.nn.l2_loss(ref-gen)) / tf.to_float(size)
 
 def style_layer_loss(a_S, a_G):
     m, h, w, c = a_G.get_shape().as_list()
@@ -19,8 +19,7 @@ def style_layer_loss(a_S, a_G):
         GS = tf.matmul(a_S, a_S, transpose_a=True) / tf.to_float(size)
         GG = tf.matmul(a_G, a_G, transpose_a=True) / tf.to_float(size)
     
-    _, c1, c2 = GS.get_shape().as_list()
-    return tf.reduce_sum(tf.squared_difference(GG,GS)) / tf.to_float(c1*c2)
+    return tf.reduce_sum(tf.nn.l2_loss(GS-GG)) / tf.to_float(tf.size(GG))
 
 def style_loss(sess, input_var, vggTrain, vggRef, style_input, style_weight):
     with tf.variable_scope('style_loss'):
