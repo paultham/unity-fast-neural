@@ -18,7 +18,7 @@ def train(params, report_fn=None, restore_epoch=None):
     vggRef = VGG16(input_placeholder, 'ref_vgg')
 
     print('Defining Losses...')
-    input_style = process_img(params.style_path, params.input_shape[0:2]).eval()
+    input_style = process_img(params.style_path, params.input_shape[0:2], pad=True).eval()
     input_style = np.stack([input_style for n in range(params.batch_size)])
     J, train_step, J_content, J_style = total_loss(sess, input_placeholder, gen, vggTrain, vggRef, input_style, params)
 
