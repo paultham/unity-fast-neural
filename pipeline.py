@@ -19,7 +19,7 @@ def process_img(filename, size=None, pad=False):
         ])
         try:
             image_decoded = tf.pad(image_decoded, paddings, mode='REFLECT')
-        except InvalidArgumentError:
+        except:
             pass
 
     image_resized = tf.image.resize_images(image_decoded, size) if size is not None else image_decoded

@@ -41,7 +41,15 @@ def train(params, report_fn=None, restore_epoch=None):
         batch = 0
         while True:
             try:
-                images = sess.run(next_files)
+                try:
+                    images = sess.run(next_files)
+                except tf.errors.InvalidArgumentError:
+                    continue
+                
+                m, w, h, c = images.shape
+                if m != params.batch_size:
+                    break
+                
                 _, total_cost, content_cost, style_cost = sess.run([train_step, J, J_content, J_style], feed_dict={input_placeholder:images})
 
                 if report_fn is None:
