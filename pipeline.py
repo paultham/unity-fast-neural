@@ -8,8 +8,8 @@ def process_img(filename, size=None, pad=False):
     
     if pad:
         image_shape = tf.image.extract_jpeg_shape(image_string)
-        h = image_shape[0]/2
-        w = image_shape[1]/2
+        h = tf.to_int32(image_shape[0]/2)
+        w = tf.to_int32(image_shape[1]/2)
         cond = tf.less(w, h)
         w, h = tf.cond(cond, lambda: ((h-w), 0), lambda: (0, (w-h)))
         paddings = tf.stack([
@@ -17,7 +17,10 @@ def process_img(filename, size=None, pad=False):
             tf.stack([w, w]),
             tf.stack([0, 0]),
         ])
-        image_decoded = tf.pad(image_decoded, paddings, mode='REFLECT')
+        try:
+            image_decoded = tf.pad(image_decoded, paddings, mode='REFLECT')
+        except InvalidArgumentError:
+            pass
 
     image_resized = tf.image.resize_images(image_decoded, size) if size is not None else image_decoded
     return image_resized
