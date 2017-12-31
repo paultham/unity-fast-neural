@@ -6,3 +6,4 @@ summaries
 *.pyc
 doodle.py
 .ipynb_checkpoints
+.DS_Store

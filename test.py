@@ -23,6 +23,11 @@ def test_model(sess):
     vgg = VGG16(input_placeholder, 'train_ref')
 
 def test_loss(sess):
+
+    params = TrainingParams()
+    style_grams = eval_style(params)
+    tf.reset_default_graph()    
+
     input_shape = [2,256,256,3]
     input_placeholder = tf.placeholder(dtype=tf.float32, shape=input_shape, name='input_images')
     input_style = np.zeros([2,256,256,3])
@@ -32,7 +37,7 @@ def test_loss(sess):
     vggTrain = VGG16(gen.output, 'train_vgg')
     vggRef = VGG16(input_placeholder, 'train_ref')
 
-    J = total_loss(sess, gen, vggTrain, vggRef, input_style, params)
+    J = total_loss(sess, input_placeholder, gen, vggTrain, vggRef, style_grams, params)
 
 # summarize(test_model)
 # summarize(test_loss)
