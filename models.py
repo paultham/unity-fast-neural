@@ -82,6 +82,14 @@ def deconv(X, kernel, channel, stride=2):
     W = tf.get_variable('deconv_weights', shape=(kernel,kernel,channel,prev_c), initializer=tf.contrib.layers.xavier_initializer())
     return tf.nn.conv2d_transpose(X, filter=W, strides=[1, stride, stride, 1], output_shape=output_shape, padding='SAME')
 
+def upsample(X, kernel, channel, stride=2):
+    m, h, w, c = X.get_shape()
+    new_height = h * stride * 2
+    new_width = w * stride * 2
+
+    X = tf.image.resize_images(X, [new_height, new_width], tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    return conv(X, kernel, channel, stride)
+
 class VGG16:
     def __init__(self, X, name):
         self.style_layers = []
@@ -121,6 +129,8 @@ class SpriteGenerator:
     def __init__(self, X, name):
         with tf.variable_scope(name):
             X = X/255.
+            # X = tf.pad(X, [[0, 0], [10, 10], [10, 10], [0, 0]], mode='REFLECT')
+
             with tf.variable_scope('b1'):
                 X = relu(instNorm(conv(X, 9, 32)))
             with tf.variable_scope('b2'):
@@ -138,10 +148,15 @@ class SpriteGenerator:
             with tf.variable_scope('r8'):
                 X = resBlock(X)
             with tf.variable_scope('d9'):
-                X = relu(instNorm(deconv(X, 3, 64, stride=2)))
+                X = relu(instNorm(upsample(X, 3, 64, stride=2)))
             with tf.variable_scope('d10'):
-                X = relu(instNorm(deconv(X, 3, 32, stride=2)))
+                X = relu(instNorm(upsample(X, 3, 32, stride=2)))
             with tf.variable_scope('d11'):
                 X = instNorm(conv(X, 9, 3))
             with tf.variable_scope('output'):
-                self.output = (tf.tanh(X) + 1.)*255./2
+                X = (tf.tanh(X) + 1.)*127.5
+
+            # h = tf.shape(X)[1]
+            # w = tf.shape(X)[2]
+            # X = tf.slice(X, [0, 10, 10, 0], [-1, h - 20, w - 20, -1])
+            self.output = X
