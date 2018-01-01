@@ -129,8 +129,9 @@ class VGG16:
 class SpriteGenerator:
     def __init__(self, X, name):
         with tf.variable_scope(name):
-            X = X/255.
+            # X = X/255.
             # X = tf.pad(X, [[0, 0], [10, 10], [10, 10], [0, 0]], mode='REFLECT')
+            X = X - tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
 
             with tf.variable_scope('b1'):
                 X = relu(instNorm(conv(X, 9, 32)))
