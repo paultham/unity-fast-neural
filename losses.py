@@ -48,6 +48,7 @@ def eval_style(params):
     with tf.Session() as sess:
         with tf.variable_scope('eval_style'):
             X = process_img(params.style_path, params.input_shape[0:2], crop=True)
+            X = tf.expand_dims(X, 0)
             vggRef = VGG16(X, 'style_vgg')
             style_layers = [gram(l) for l in vggRef.style_layers]
             return sess.run(style_layers)

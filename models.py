@@ -95,7 +95,8 @@ class VGG16:
         self.style_layers = []
         with VGG16Weights() as w:
             with tf.name_scope(name):
-                X = X - tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
+                X = tf.reverse(X, [3])
+                X = X - tf.constant([103.939, 116.779, 123.68], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
                 with tf.name_scope('b1'):
                     X = relu(conv(X, 3, 64, weights=w.get_weights(0), bias=True))
                     X = relu(conv(X, 3, 64, weights=w.get_weights(1), bias=True))
