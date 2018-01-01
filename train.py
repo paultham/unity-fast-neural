@@ -5,6 +5,12 @@ from pipeline import *
 from params import TrainingParams
 from models import *
 
+# Next steps
+# - preproc the style image so that it's not mirrored pad, 
+# but centrally cropped so that it maintains the aspect ratio and
+# maximizes the size before bilinear downsize
+# - futher add padding before and remove them after the generator net
+# - switch to resize up instead of conv_transpose
 def train(params, report_fn=None, restore_epoch=None):
 
     style_grams = eval_style(params)
