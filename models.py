@@ -50,7 +50,8 @@ def conv(X, kernel=3, channel=3, stride=1, weights=None, bias=False, suffix=''):
     if weights is None:
         # tf.contrib.layers.xavier_initializer
         # tf.truncated_normal_initializer(stddev=0.1)
-        W = tf.get_variable('conv_weight'+suffix, shape=[kernel, kernel, c, channel], initializer=tf.contrib.layers.xavier_initializer())
+        # tf.random_normal_initializer(stddev=0.1)
+        W = tf.get_variable('conv_weight'+suffix, shape=[kernel, kernel, c, channel], initializer=tf.random_normal_initializer(stddev=0.1))
     else:
         W = tf.constant(weights[0], name='W')
         B = tf.constant(weights[1], name='B')
@@ -68,10 +69,10 @@ def max_pool(X):
     return tf.nn.max_pool(X, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 def instNorm(X):
-    epsilon = 1e-9
-    mean, var = tf.nn.moments(X, [1, 2], keep_dims=True)
-    return tf.div(tf.subtract(X, mean), tf.sqrt(tf.add(var, epsilon)))
-    # return tf.contrib.layers.instance_norm(X)
+    # epsilon = 1e-9
+    # mean, var = tf.nn.moments(X, [1, 2], keep_dims=True)
+    # return tf.div(tf.subtract(X, mean), tf.sqrt(tf.add(var, epsilon)))
+    return tf.contrib.layers.instance_norm(X, scale=False)
 
 def resBlock(X):
     i = X
@@ -82,14 +83,13 @@ def resBlock(X):
 def deconv(X, kernel, channel, stride=2):
     m, prev_w, prev_h, prev_c = X.get_shape()
     output_shape = tf.constant([m, prev_w*stride, prev_h*stride, channel], dtype=tf.int32)
-    W = tf.get_variable('deconv_weights', shape=(kernel,kernel,channel,prev_c), initializer=tf.contrib.layers.xavier_initializer())
+    W = tf.get_variable('deconv_weights', shape=(kernel,kernel,channel,prev_c), initializer=tf.random_normal_initializer(stddev=0.1))
     return tf.nn.conv2d_transpose(X, filter=W, strides=[1, stride, stride, 1], output_shape=output_shape, padding='SAME')
 
 def upsample(X, kernel, channel, stride=2):
     m, h, w, c = X.get_shape()
-    new_height = h * stride * 2
-    new_width = w * stride * 2
-
+    new_height = h * stride ** 2
+    new_width = w * stride ** 2
     X = tf.image.resize_images(X, [new_height, new_width], tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     return conv(X, kernel, channel, stride)
 
@@ -109,32 +109,32 @@ class VGG16:
                     X = relu(conv(X, 3, 128, weights=w.get_weights(3), bias=True))
                     X = relu(conv(X, 3, 128, weights=w.get_weights(4), bias=True))
                     self.style_layers.append(X)
+                    self.content_layer=X
                     X = max_pool(X)
                 with tf.name_scope('b3'):
                     X = relu(conv(X, 3, 256, weights=w.get_weights(6), bias=True))
                     X = relu(conv(X, 3, 256, weights=w.get_weights(7), bias=True))
                     X = relu(conv(X, 3, 256, weights=w.get_weights(8), bias=True))
                     self.style_layers.append(X)
-                    self.content_layer=X
                     X = max_pool(X)
                 with tf.name_scope('b4'):
                     X = relu(conv(X, 3, 512, weights=w.get_weights(10), bias=True))
                     X = relu(conv(X, 3, 512, weights=w.get_weights(11), bias=True))
                     X = relu(conv(X, 3, 512, weights=w.get_weights(12), bias=True))
                     self.style_layers.append(X)
-                    X = max_pool(X)
-                with tf.name_scope('b5'):
-                    X = relu(conv(X, 3, 512, weights=w.get_weights(14), bias=True))
-                    X = relu(conv(X, 3, 512, weights=w.get_weights(15), bias=True))
-                    X = relu(conv(X, 3, 512, weights=w.get_weights(16), bias=True))
-                    X = max_pool(X)
+                    # X = max_pool(X)
+                # with tf.name_scope('b5'):
+                #     X = relu(conv(X, 3, 512, weights=w.get_weights(14), bias=True))
+                #     X = relu(conv(X, 3, 512, weights=w.get_weights(15), bias=True))
+                #     X = relu(conv(X, 3, 512, weights=w.get_weights(16), bias=True))
+                #     X = max_pool(X)
 
 class SpriteGenerator:
     def __init__(self, X, name):
         with tf.variable_scope(name):
             # X = X/255.
             # X = tf.pad(X, [[0, 0], [10, 10], [10, 10], [0, 0]], mode='REFLECT')
-            X = X - tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
+            # X = X - tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
 
             with tf.variable_scope('b1'):
                 X = relu(instNorm(conv(X, 9, 32)))

@@ -8,27 +8,24 @@ def content_loss(vggTrain, vggRef, weight):
     with tf.variable_scope('content_loss'):
         Y = vggRef.content_layer
         X = vggTrain.content_layer
-        size = tf.size(X)
-        return weight * tf.nn.l2_loss(X - Y) * 2 / tf.to_float(size)
+        m, h, w, c = X.get_shape()
+        return weight * tf.reduce_sum(tf.squared_difference(Y,X)) / tf.to_float(h*w*c)
 
 def gram(X):
     with tf.variable_scope('gram'):
         m, h, w, c = X.get_shape().as_list()
         X = tf.reshape(X, tf.stack([m, -1, c]))
-        return tf.matmul(X, X, transpose_a=True) / tf.to_float(w * h * c)
+        return tf.matmul(X, X, transpose_a=True) / tf.to_float(w*h*c)
 
-def style_loss(sess, input_var, vggTrain, style_grams, style_weight):
+def style_loss(sess, vggTrain, style_grams, weight):
     with tf.variable_scope('style_loss'):
         loss = 0
-        # ref_styles = sess.run(vggRef.style_layers, feed_dict={input_var:style_input})
         for i in range(len(vggTrain.style_layers)):
             with tf.variable_scope('style_loss_layer_'+str(i)):
                 X = vggTrain.style_layers[i]
                 Y = style_grams[i]
-                size = tf.size(X)
-                loss += tf.nn.l2_loss(gram(X) - Y) * 2 / tf.to_float(size)
-
-    return style_weight*(loss)
+                loss += tf.reduce_sum(tf.squared_difference(Y, gram(X)))
+    return loss * weight
 
 def tv_loss(X, weight):
     with tf.variable_scope('tv_loss'):
@@ -36,7 +33,7 @@ def tv_loss(X, weight):
 
 def total_loss(sess, input_var, generator, vggTrain, vggRef, style_grams, params):
     J_content = content_loss(vggTrain, vggRef, params.content_weight)
-    J_style = style_loss(sess, input_var, vggTrain, style_grams, params.style_weight)
+    J_style = style_loss(sess, vggTrain, style_grams, params.style_weight)
     J_tv = tv_loss(generator.output, params.tv_weight)
     with tf.variable_scope('total_loss'):
         total_loss = J_content + J_style + J_tv
