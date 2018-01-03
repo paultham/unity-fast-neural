@@ -11,74 +11,55 @@ from models import *
 # maximizes the size before bilinear downsize
 # - futher add padding before and remove them after the generator net
 # - switch to resize up instead of conv_transpose
-def train(params, report_fn=None, restore_epoch=None):
+def train(params, report_fn=None, start_new=False):
 
+    print('Evaluating Target Style...')
     style_grams = eval_style(params)
 
     tf.reset_default_graph()
     sess = tf.InteractiveSession()
 
+    print('Defining Input Pipeline...')
+    input_images = create_tf_pipeline('/Users/paul/Work/ai/images/tf/0.tfr', params)
+
     print('Building Model...')
     input_shape = [params.batch_size] + params.input_shape
-    input_placeholder = tf.placeholder(dtype=tf.float32, shape=input_shape, name='input_images')
+    input_images.set_shape(input_shape)
 
-    gen = SpriteGenerator(input_placeholder, 'SpriteGenerator')
+    gen = SpriteGenerator(input_images, 'SpriteGenerator')
     vggTrain = VGG16(gen.output, 'train_vgg')
-    vggRef = VGG16(input_placeholder, 'ref_vgg')
+    vggRef = VGG16(input_images, 'ref_vgg')
 
     print('Defining Losses...')
-    J, train_step, J_content, J_style = total_loss(sess, input_placeholder, gen, vggTrain, vggRef, style_grams, params)
+    global_step = tf.Variable(0, trainable=False, name='global_step')
+    J, train_step, J_content, J_style = total_loss(sess, input_images, gen, vggTrain, vggRef, style_grams, params, global_step)
 
-    print('Defining Input Pipeline...')
-    #files_iterator = create_pipeline(sess, params)
-    #next_files = files_iterator.get_next()
-    filenames = tf.data.Dataset.list_files(params.train_path).take(params.total_train_sample)
-    filenames_iterator = filenames.make_one_shot_iterator()
-    next_filenames = filenames_iterator.get_next()
-
-    saver = tf.train.Saver()
-    initial_epoch = 0
-    if restore_epoch is not None:
-        initial_epoch = restore_epoch+1
-        saver.restore(sess, params.save_path + str(restore_epoch))
-        print('Continuing...')
-    else:
-        print('Starting...')
+    with tf.name_scope('summaries'):
+        tf.summary.scalar('loss', J)
+        tf.summary.scalar('style_loss', J_style)
+        tf.summary.scalar('content_loss', J_content)
+    
+    print('Starting...')
+    if start_new:
         sess.run(tf.global_variables_initializer())
 
-    for epoch in range(initial_epoch, initial_epoch+params.num_epoch):
-        #sess.run(files_iterator.initializer)
-        batch = 0
-        while True:
-            try:
-                try:
-                    #images = sess.run(next_files)
-                    images = parse_tf(sess, next_filenames, params)
-                except tf.errors.InvalidArgumentError:
-                    continue
-                
-                m, w, h, c = images.shape
-                if m != params.batch_size:
-                    break
-                
-                _, total_cost, content_cost, style_cost = sess.run([train_step, J, J_content, J_style], feed_dict={input_placeholder:images})
-
-                if report_fn is None:
-                    print('Batch %i, Epoch %i, Cost %s' % (batch, epoch, str(total_cost)))
-                else:
-                    report_fn(params, batch, epoch, total_cost, content_cost, style_cost)
-                batch += 1
-
-            except tf.errors.OutOfRangeError:
-                break   
-
-        print('Saving checkpoint')
-        saver.save(sess, params.save_path + str(epoch))
-    
-    print('Saving model to ' + params.save_path)
-    saver.save(sess, params.save_path)
+    with tf.train.MonitoredTrainingSession(checkpoint_dir='summaries', save_summaries_steps=2) as sess:
+        while not sess.should_stop():
+            _, total_cost, content_cost, style_cost = sess.run([train_step, J, J_content, J_style])
+            if report_fn is not None:
+                step = tf.train.global_step(sess, global_step)
+                report_fn(params, step, 0, total_cost, content_cost, style_cost)
 
     print('Done...')
 
-# params = TrainingParams()
-# train(params)
+params = TrainingParams()
+params.train_path = '/Users/paul/Work/ai/images/tf/*.tfr'
+params.style_path='data/mosaic.jpg'
+params.batch_size = 4
+params.num_epoch = 1
+params.learn_rate = 0.0001
+params.total_train_sample = 1250
+params.style_weight = 5.0
+params.content_weight = 1.0
+params.tv_weight=0.0
+train(params)

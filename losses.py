@@ -31,14 +31,14 @@ def tv_loss(X, weight):
     with tf.variable_scope('tv_loss'):
         return weight * tf.reduce_sum(tf.image.total_variation(X))
 
-def total_loss(sess, input_var, generator, vggTrain, vggRef, style_grams, params):
+def total_loss(sess, input_var, generator, vggTrain, vggRef, style_grams, params, global_step):
     J_content = content_loss(vggTrain, vggRef, params.content_weight)
     J_style = style_loss(sess, vggTrain, style_grams, params.style_weight)
     J_tv = tv_loss(generator.output, params.tv_weight)
     with tf.variable_scope('total_loss'):
         total_loss = J_content + J_style + J_tv
     with tf.variable_scope('optimizer'):
-        train_step = tf.train.AdamOptimizer(params.learn_rate).minimize(total_loss)
+        train_step = tf.train.AdamOptimizer(params.learn_rate).minimize(total_loss, global_step=global_step)
     return total_loss, train_step, J_content, J_style
 
 def eval_style(params):
