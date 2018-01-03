@@ -24,6 +24,21 @@ def create_pipeline(sess, params):
     files = files.batch(params.batch_size)
     return files.make_initializable_iterator()
 
+def process_tf(x, batch_size, shape=None):
+    context, parsed_features = tf.parse_single_sequence_example(x, sequence_features={
+        'imgs':tf.FixedLenSequenceFeature([shape[0]*shape[1]*3], dtype=tf.float32)
+    })
+    imgs = parsed_features['imgs']
+    imgs = tf.reshape(imgs, [batch_size] + shape + [3])
+    return imgs
+        
+def parse_tf(sess, next_filenames, params):
+    files = tf.data.TFRecordDataset(sess.run(next_filenames))
+    files = files.map(lambda x: process_tf(x, params.batch_size, params.input_shape[0:2]))
+    files_iterator = files.make_one_shot_iterator()
+    batch = files_iterator.get_next()
+    return sess.run(batch)
+
 def test_pipeline(sess):
     params = TrainingParams()
     iterator = create_pipeline(sess, params)

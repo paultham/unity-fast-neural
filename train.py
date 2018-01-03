@@ -30,8 +30,11 @@ def train(params, report_fn=None, restore_epoch=None):
     J, train_step, J_content, J_style = total_loss(sess, input_placeholder, gen, vggTrain, vggRef, style_grams, params)
 
     print('Defining Input Pipeline...')
-    files_iterator = create_pipeline(sess, params)
-    next_files = files_iterator.get_next()
+    #files_iterator = create_pipeline(sess, params)
+    #next_files = files_iterator.get_next()
+    filenames = tf.data.Dataset.list_files(params.train_path).take(params.total_train_sample)
+    filenames_iterator = filenames.make_one_shot_iterator()
+    next_filenames = filenames_iterator.get_next()
 
     saver = tf.train.Saver()
     initial_epoch = 0
@@ -44,12 +47,13 @@ def train(params, report_fn=None, restore_epoch=None):
         sess.run(tf.global_variables_initializer())
 
     for epoch in range(initial_epoch, initial_epoch+params.num_epoch):
-        sess.run(files_iterator.initializer)
+        #sess.run(files_iterator.initializer)
         batch = 0
         while True:
             try:
                 try:
-                    images = sess.run(next_files)
+                    #images = sess.run(next_files)
+                    images = parse_tf(sess, next_filenames, params)
                 except tf.errors.InvalidArgumentError:
                     continue
                 
