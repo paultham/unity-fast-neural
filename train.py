@@ -20,7 +20,7 @@ def train(params, report_fn=None, start_new=False):
     sess = tf.InteractiveSession()
 
     print('Defining Input Pipeline...')
-    input_images = create_tf_pipeline('/Users/paul/Work/ai/images/tf/0.tfr', params)
+    input_images = create_tf_pipeline('/home/ubuntu/work/images/train/0.tfr', params)
 
     print('Building Model...')
     input_shape = [params.batch_size] + params.input_shape
@@ -51,15 +51,3 @@ def train(params, report_fn=None, start_new=False):
                 report_fn(params, step, 0, total_cost, content_cost, style_cost)
 
     print('Done...')
-
-params = TrainingParams()
-params.train_path = '/Users/paul/Work/ai/images/tf/*.tfr'
-params.style_path='data/mosaic.jpg'
-params.batch_size = 4
-params.num_epoch = 1
-params.learn_rate = 0.0001
-params.total_train_sample = 1250
-params.style_weight = 5.0
-params.content_weight = 1.0
-params.tv_weight=0.0
-train(params)
