@@ -32,9 +32,11 @@ def process_tf(x, shape=None):
     imgs = tf.reshape(imgs, shape + [3])
     return imgs
         
-def create_tf_pipeline(next_filenames, params):
-    files = tf.data.TFRecordDataset(next_filenames)
+def create_tf_pipeline(params):
+    files = tf.data.TFRecordDataset(params.train_path)
     files = files.map(lambda x: process_tf(x, params.input_shape[0:2]))
+    files = files.shuffle(params.total_train_sample)
+    files = files.take(params.total_train_sample)
     files = files.batch(params.batch_size)
     files = files.repeat(params.num_epoch)
     files_iterator = files.make_one_shot_iterator()
@@ -55,8 +57,3 @@ def test_pipeline(sess):
                 print(files)
             except tf.errors.OutOfRangeError:
                 break
-
-# tf.reset_default_graph()
-# sess = tf.InteractiveSession()
-# test_pipeline(sess)
-

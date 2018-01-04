@@ -69,10 +69,11 @@ def max_pool(X):
     return tf.nn.max_pool(X, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 def instNorm(X):
-    # epsilon = 1e-9
-    # mean, var = tf.nn.moments(X, [1, 2], keep_dims=True)
-    # return tf.div(tf.subtract(X, mean), tf.sqrt(tf.add(var, epsilon)))
-    return tf.contrib.layers.instance_norm(X, scale=False)
+    with tf.variable_scope('instNorm'):
+        epsilon = 1e-9
+        mean, var = tf.nn.moments(X, [1, 2], keep_dims=True)
+        return tf.div(tf.subtract(X, mean), tf.sqrt(tf.add(var, epsilon)))
+        # return tf.contrib.layers.instance_norm(X, scale=False)
 
 def resBlock(X):
     i = X
