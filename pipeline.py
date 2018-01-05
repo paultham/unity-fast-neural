@@ -34,8 +34,8 @@ def process_tf(x, shape=None):
         
 def create_tf_pipeline(params):
     files = tf.data.TFRecordDataset(params.train_path)
-    files = files.map(lambda x: process_tf(x, params.input_shape[0:2]))
-    files = files.shuffle(params.total_train_sample)
+    files = files.map(lambda x: process_tf(x, params.input_shape[0:2]), num_parallel_calls=params.read_thread)
+#     files = files.shuffle(params.total_train_sample)
     files = files.take(params.total_train_sample)
     files = files.batch(params.batch_size)
     files = files.repeat(params.num_epoch)
