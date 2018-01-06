@@ -1,7 +1,7 @@
 #%%
 import tensorflow as tf
 import numpy as np
-from models import VGG16
+from vgg import VGG16
 from pipeline import *
 
 def content_loss(vggTrain, vggRef, weight):

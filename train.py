@@ -3,7 +3,8 @@ import tensorflow as tf
 from losses import *
 from pipeline import *
 from params import TrainingParams
-from models import *
+from models import SpriteGenerator
+from vgg import VGG16
 
 # Next steps
 # - preproc the style image so that it's not mirrored pad, 
