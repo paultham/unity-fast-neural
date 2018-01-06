@@ -13,6 +13,7 @@ class TrainingParams:
         self.save_path = 'summaries'
         self.summary_step = 100
         self.read_thread = 1
+        self.log_step = 100
 
 class TransferParams:
     def __init__(self):

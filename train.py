@@ -47,6 +47,7 @@ def train(params, report_fn=None, start_new=False):
 
     with tf.train.MonitoredTrainingSession(
         checkpoint_dir=params.save_path, 
+        log_step_count_steps=params.log_step,
         save_summaries_steps=params.summary_step
         ) as sess:
         while not sess.should_stop():
